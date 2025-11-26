@@ -23,8 +23,7 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Backend Tests
-      run: |
-        python manage.py test
+      run: python manage.py test
 
     # Frontend Setup & Build
     - name: Set up Node.js
@@ -46,22 +45,21 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+    - uses: actions/checkout@v3
+
     - name: Deploy to Server via SSH
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SERVER_IP }}
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          # Navigate to project directory
-          # Assuming the project is cloned at ~/santo-dashboard
           cd ~/santo-dashboard
-          
+
           # Pull latest code
           git pull origin main
-          
+
           # Backend Deployment
-          echo "Deploying Backend..."
           if [ ! -d "venv" ]; then
             python3 -m venv venv
           fi
@@ -69,15 +67,13 @@ jobs:
           pip install -r requirements.txt
           python manage.py migrate
           python manage.py collectstatic --noinput
-          
+
           # Frontend Deployment
-          echo "Deploying Frontend..."
           cd santo-project
           npm ci
           npm run build
           cd ..
-          
+
           # Restart Services
-          echo "Restarting Services..."
           sudo systemctl restart gunicorn
           sudo systemctl restart nginx

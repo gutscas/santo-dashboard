@@ -38,7 +38,6 @@ export default function Auth() {
             localStorage.setItem("refresh", res.data.refresh);
             localStorage.setItem("user", JSON.stringify(res.data.user));
 
-            // Update context immediately so dashboard can load data
             updateUser(res.data.user);
 
             setMsg("🎉 Login Successful!");

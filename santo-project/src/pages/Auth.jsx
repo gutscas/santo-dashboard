@@ -275,7 +275,6 @@ export default function Auth() {
                         </div>
                     </div>
 
-                    {/* Sliding Content Panel */}
                     <div
                         className={`absolute w-full md:w-1/2 h-full p-12 hidden md:flex items-center justify-center transition-all duration-700 ease-in-out ${isLogin
                             ? 'left-full md:left-1/2 bg-gradient-to-br from-blue-600 to-purple-700'

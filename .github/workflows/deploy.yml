@@ -5,11 +5,16 @@ on:
     branches: [ main ]
 
 jobs:
+  # ====================================
+  # 1️⃣ TEST & BUILD JOB (CI)
+  # ====================================
   test-and-build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    # --- Checkout Code ---
+    - name: Checkout Repository
+      uses: actions/checkout@v3
 
     # --- Backend Setup & Tests ---
     - name: Set up Python
@@ -22,7 +27,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run Backend Tests
+    - name: Run Django Tests
       run: python manage.py test
 
     # --- Frontend Setup & Build ---
@@ -40,6 +45,9 @@ jobs:
       run: npm run build
 
 
+  # ====================================
+  # 2️⃣ DEPLOY JOB (CD)
+  # ====================================
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
@@ -53,10 +61,10 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          # ✅ Change to correct path (use your real username)
+          # --- Go to home directory ---
           cd /home/rayi
 
-          # ✅ Clone if not already present
+          # --- Clone repo if not exists ---
           if [ ! -d "santo-dashboard" ]; then
             git clone git@github.com:gutscas/santo-dashboard.git
           fi
@@ -64,7 +72,7 @@ jobs:
           cd santo-dashboard
           git pull origin main
 
-          # ✅ Backend setup
+          # --- Setup Python environment ---
           if [ ! -d "venv" ]; then
             python3 -m venv venv
           fi
@@ -73,35 +81,23 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-          # Run migrations and collectstatic (inside backend if needed)
-          if [ -f "manage.py" ]; then
-            python manage.py migrate
-            python manage.py collectstatic --noinput
-          elif [ -f "backend/manage.py" ]; then
-            cd backend
-            python manage.py migrate
-            python manage.py collectstatic --noinput
-            cd ..
-          fi
+          # --- Django Migrations & Collect Static ---
+          python manage.py migrate
+          python manage.py collectstatic --noinput
 
-          # ✅ Frontend setup
-          # If your React folder name is different, change it here
-          if [ -d "santo-project" ]; then
-            cd santo-project
-          elif [ -d "frontend" ]; then
-            cd frontend
-          fi
-
-          # Install Node.js if not available
+          # --- Ensure Node.js is available ---
           if ! command -v npm &> /dev/null; then
+            echo "Installing Node.js..."
             sudo apt update
             sudo apt install -y nodejs npm
           fi
 
-          npm ci
+          # --- Frontend Build ---
+          cd santo-project
+          npm install
           npm run build
           cd ..
 
-          # ✅ Restart services safely (no interactive sudo)
+          # --- Restart Services ---
           echo "${{ secrets.SERVER_PASSWORD }}" | sudo -S systemctl restart gunicorn
           echo "${{ secrets.SERVER_PASSWORD }}" | sudo -S systemctl restart nginx

@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # --- Checkout repo ---
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -31,7 +30,7 @@ jobs:
         run: python manage.py test
 
       # --- Frontend Setup & Build ---
-      - name: Install NVM & Node.js 20.19
+      - name: Set up Node.js via NVM
         run: |
           curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.6/install.sh | bash
           export NVM_DIR="$HOME/.nvm"
@@ -39,8 +38,6 @@ jobs:
           nvm install 20.19
           nvm use 20.19
           nvm alias default 20.19
-          node -v
-          npm -v
 
       - name: Install Frontend Dependencies
         working-directory: ./santo-project
@@ -68,30 +65,29 @@ jobs:
           script: |
             cd ~/santo-dashboard
 
-            # Pull latest code
+            # --- Pull latest code ---
             git pull origin main
 
-            # Activate virtualenv & install backend dependencies
+            # --- Backend setup ---
             source venv/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt
 
-            # Set up Node.js via NVM
+            # --- Node.js setup (NVM) ---
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install 20.19
-            nvm use 20.19
+            nvm use 20.19 || nvm install 20.19
 
-            # Frontend build
+            # --- Frontend build ---
             cd santo-project
-            npm ci
+            npm install
             npm run build
             cd ..
 
-            # Django migrations & static files
+            # --- Django migrations & collectstatic ---
             python manage.py migrate
             python manage.py collectstatic --noinput
 
-            # Restart services (passwordless sudo required)
+            # --- Restart services (NOPASSWD sudo) ---
             sudo systemctl restart gunicorn
             sudo systemctl restart nginx

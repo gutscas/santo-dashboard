@@ -5,12 +5,17 @@ on:
     branches: [ main ]
 
 jobs:
+  # ====================================
+  # 1️⃣ TEST & BUILD JOB (CI)
+  # ====================================
   test-and-build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
+      # --- Backend Setup & Tests ---
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -24,10 +29,18 @@ jobs:
       - name: Run Django Tests
         run: python manage.py test
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.19'
+      # --- Frontend Setup & Build ---
+      - name: Set up Node.js via NVM
+        run: |
+          # Install NVM
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.6/install.sh | bash
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+          # Install & use Node 20.19 (Vite requirement)
+          nvm install 20.19
+          nvm use 20.19
+          nvm alias default 20.19
 
       - name: Install Frontend Dependencies
         working-directory: ./santo-project
@@ -37,42 +50,49 @@ jobs:
         working-directory: ./santo-project
         run: npm run build
 
+  # ====================================
+  # 2️⃣ DEPLOY JOB (CD)
+  # ====================================
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - uses: actions/checkout@v3
-
       - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # --- Go to project folder ---
             cd ~/santo-dashboard
+
+            # --- Pull latest code ---
             git pull origin main
 
+            # --- Backend setup ---
             source venv/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt
 
-            # Node.js setup
+            # --- Node.js setup (NVM) ---
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install 20.19
-            nvm use 20.19
+            nvm use 20.19 || nvm install 20.19
 
+            # --- Frontend build ---
             cd santo-project
-            npm ci
+            npm install
             npm run build
             cd ..
 
+            # --- Django migrations & collectstatic ---
             python manage.py migrate
             python manage.py collectstatic --noinput
 
-            # Restart Gunicorn & Nginx without sudo
-            systemctl --user restart gunicorn-santo
-            systemctl --user restart nginx
+            # --- Restart services ---
+            sudo systemctl daemon-reload
+            sudo systemctl restart gunicorn-santo
+            sudo systemctl restart nginx

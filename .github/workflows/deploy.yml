@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # Backend Setup & Tests
+    # --- Backend Setup & Tests ---
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -25,7 +25,7 @@ jobs:
     - name: Run Backend Tests
       run: python manage.py test
 
-    # Frontend Setup & Build
+    # --- Frontend Setup & Build ---
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
@@ -39,14 +39,13 @@ jobs:
       working-directory: ./santo-project
       run: npm run build
 
+
   deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
     steps:
-    - uses: actions/checkout@v3
-
     - name: Deploy to Server via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -54,26 +53,55 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd ~/santo-dashboard
+          # ✅ Change to correct path (use your real username)
+          cd /home/rayi
 
-          # Pull latest code
+          # ✅ Clone if not already present
+          if [ ! -d "santo-dashboard" ]; then
+            git clone git@github.com:gutscas/santo-dashboard.git
+          fi
+
+          cd santo-dashboard
           git pull origin main
 
-          # Backend Deployment
+          # ✅ Backend setup
           if [ ! -d "venv" ]; then
             python3 -m venv venv
           fi
-          source venv/bin/activate
-          pip install -r requirements.txt
-          python manage.py migrate
-          python manage.py collectstatic --noinput
 
-          # Frontend Deployment
-          cd santo-project
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+          # Run migrations and collectstatic (inside backend if needed)
+          if [ -f "manage.py" ]; then
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+          elif [ -f "backend/manage.py" ]; then
+            cd backend
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+            cd ..
+          fi
+
+          # ✅ Frontend setup
+          # If your React folder name is different, change it here
+          if [ -d "santo-project" ]; then
+            cd santo-project
+          elif [ -d "frontend" ]; then
+            cd frontend
+          fi
+
+          # Install Node.js if not available
+          if ! command -v npm &> /dev/null; then
+            sudo apt update
+            sudo apt install -y nodejs npm
+          fi
+
           npm ci
           npm run build
           cd ..
 
-          # Restart Services
-          sudo systemctl restart gunicorn
-          sudo systemctl restart nginx
+          # ✅ Restart services safely (no interactive sudo)
+          echo "${{ secrets.SERVER_PASSWORD }}" | sudo -S systemctl restart gunicorn
+          echo "${{ secrets.SERVER_PASSWORD }}" | sudo -S systemctl restart nginx

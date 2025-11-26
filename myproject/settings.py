@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-restoration-key-replace-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['210.18.176.178']
 
 # Application definition
 

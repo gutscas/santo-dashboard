@@ -30,10 +30,17 @@ jobs:
         run: python manage.py test
 
       # --- Frontend Setup & Build ---
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+      - name: Set up Node.js via NVM
+        run: |
+          # Install NVM
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.6/install.sh | bash
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+          # Install & use Node 18
+          nvm install 18
+          nvm use 18
+          nvm alias default 18
 
       - name: Install Frontend Dependencies
         working-directory: ./santo-project
@@ -59,37 +66,23 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # --- Go to home directory ---
-            cd /home/rayi
+            # --- Go to project folder ---
+            cd ~/santo-dashboard
 
-            # --- Clone repo if not exists ---
-            if [ ! -d "santo-dashboard" ]; then
-              git clone git@github.com:gutscas/santo-dashboard.git
-            fi
-
-            cd santo-dashboard
+            # --- Pull latest code ---
             git pull origin main
 
-            # --- Backend Python environment ---
-            if [ ! -d "venv" ]; then
-              python3 -m venv venv
-            fi
+            # --- Backend setup ---
             source venv/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt
 
-            # --- Install Node.js via NVM if missing ---
-            if ! command -v node &> /dev/null; then
-              echo "Installing NVM & Node.js..."
-              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.6/install.sh | bash
-              export NVM_DIR="$HOME/.nvm"
-              [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-              nvm install 18
-              nvm use 18
-              nvm alias default 18
-            fi
+            # --- Node.js setup (NVM) ---
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 18 || nvm install 18
 
-            # --- Frontend build first (React) ---
+            # --- Frontend build ---
             cd santo-project
             npm install
             npm run build
@@ -99,6 +92,6 @@ jobs:
             python manage.py migrate
             python manage.py collectstatic --noinput
 
-            # --- Restart Services (Gunicorn + Nginx) ---
-            echo "${{ secrets.SERVER_PASSWORD }}" | sudo -S systemctl restart gunicorn
-            echo "${{ secrets.SERVER_PASSWORD }}" | sudo -S systemctl restart nginx
+            # --- Restart services using sudo password ---
+            echo "${{ secrets.SERVER_SUDO_PASSWORD }}" | sudo -S systemctl restart gunicorn
+            echo "${{ secrets.SERVER_SUDO_PASSWORD }}" | sudo -S systemctl restart nginx

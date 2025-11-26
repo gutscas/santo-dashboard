@@ -1,37 +1,83 @@
-name: Deploy Django + React
+name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main  # change if your branch is different
+    branches: [ main ]
 
 jobs:
-  deploy:
+  test-and-build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-    - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.8.1
+    # Backend Setup & Tests
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+        python-version: '3.10'
 
-    - name: Deploy to server
+    - name: Install Backend Dependencies
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-        cd ${{ secrets.PROJECT_DIR }}
-        git pull origin main
-        # React frontend
-        cd frontend
-        npm install
-        npm run build
-        cd ..
-        # Python backend
-        source venv/bin/activate
+        python -m pip install --upgrade pip
         pip install -r requirements.txt
-        python manage.py migrate
-        python manage.py collectstatic --noinput
-        sudo systemctl restart gunicorn
-        EOF
+
+    - name: Run Backend Tests
+      run: |
+        python manage.py test
+
+    # Frontend Setup & Build
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install Frontend Dependencies
+      working-directory: ./santo-project
+      run: npm ci
+
+    - name: Build Frontend
+      working-directory: ./santo-project
+      run: npm run build
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Deploy to Server via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          # Navigate to project directory
+          # Assuming the project is cloned at ~/santo-dashboard
+          cd ~/santo-dashboard
+          
+          # Pull latest code
+          git pull origin main
+          
+          # Backend Deployment
+          echo "Deploying Backend..."
+          if [ ! -d "venv" ]; then
+            python3 -m venv venv
+          fi
+          source venv/bin/activate
+          pip install -r requirements.txt
+          python manage.py migrate
+          python manage.py collectstatic --noinput
+          
+          # Frontend Deployment
+          echo "Deploying Frontend..."
+          cd santo-project
+          npm ci
+          npm run build
+          cd ..
+          
+          # Restart Services
+          echo "Restarting Services..."
+          sudo systemctl restart gunicorn
+          sudo systemctl restart nginx

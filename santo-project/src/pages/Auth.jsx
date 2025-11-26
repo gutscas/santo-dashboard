@@ -3,7 +3,6 @@ import api from "../services/apiReusable";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeClosed } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
-// import { useAuth } from '../contexts/AuthContext';
 export default function Auth() {
     const location = useLocation();
     const navigate = useNavigate();

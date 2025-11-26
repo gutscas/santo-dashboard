@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # --- Checkout Code ---
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       # --- Backend Setup & Tests ---
       - name: Set up Python
@@ -42,7 +42,6 @@ jobs:
       - name: Build Frontend
         working-directory: ./santo-project
         run: npm run build
-
 
   # ====================================
   # 2️⃣ DEPLOY JOB (CD)
@@ -87,6 +86,7 @@ jobs:
               [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
               nvm install 18
               nvm use 18
+              nvm alias default 18
             fi
 
             # --- Frontend build first (React) ---

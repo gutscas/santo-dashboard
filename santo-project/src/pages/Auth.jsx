@@ -15,8 +15,8 @@ export default function Auth() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
-
-    useEffect(() => {
+// 
+    useEffect(() => { 
         setIsLogin(location.pathname !== '/register');
         setMsg("");
     }, [location.pathname]);

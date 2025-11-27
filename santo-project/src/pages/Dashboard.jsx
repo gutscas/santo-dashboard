@@ -178,7 +178,7 @@ const Dashboard = () => {
                     <div className="flex items-center space-x-4 mb-6">
                         {profile && profile.file ? (
                             <img
-                                src={`http://localhost:8000${profile.file}`}
+                                src={`https://project.rayi.in${profile.file}`}
                                 alt="Profile"
                                 className="w-20 h-20 rounded-full object-cover border-4 border-blue-600"
                             />

@@ -66,7 +66,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen, user, profile }) => {
                     </span>
                     {profile && profile.file ? (
                         <img
-                            src={`http://localhost:8000${profile.file}`}
+                            src={`https://project.rayi.in${profile.file}`}
                             alt="Profile"
                             className="w-8 h-8 rounded-full object-cover border-2 border-blue-600"
                         />

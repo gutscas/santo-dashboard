@@ -35,7 +35,7 @@ const Profile = () => {
                 file: null
             });
             if (res.data.file) {
-                setPreviewImage(`http://localhost:8000${res.data.file}`);
+                setPreviewImage(`https://project.rayi.in${res.data.file}`);
             }
         } catch (err) {
             console.log('No profile found or error fetching profile');

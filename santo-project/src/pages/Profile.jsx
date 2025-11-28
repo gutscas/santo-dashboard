@@ -84,6 +84,7 @@ const Profile = () => {
                     headers: { 'Content-Type': 'multipart/form-data' },
                 });
                 setMessage('✅ Profile updated successfully!');
+                //  fetchProfile();
             } else {
                 // Create new profile
                 res = await api.post('api/profile/me/', submitData, {
@@ -93,10 +94,11 @@ const Profile = () => {
             }
 
             setProfile(res.data);
+            // console.log(res.data);
             setTimeout(() => setMessage(''), 2000);
             setIsEditing(false);
             if (res.data.file) {
-                setPreviewImage(`http://localhost:8000${res.data.file}`);
+                setPreviewImage(`https://project.rayi.in${res.data.file}`);
             }
         } catch (err) {
             setMessage('❌ ' + (err.response?.data?.error || 'Failed to save profile'));
@@ -113,7 +115,7 @@ const Profile = () => {
             file: null
         });
         if (profile?.file) {
-            setPreviewImage(`http://localhost:8000${profile.file}`);
+            setPreviewImage(`https://project.rayi.in${profile.file}`);
         } else {
             setPreviewImage(null);
         }

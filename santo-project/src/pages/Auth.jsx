@@ -32,7 +32,7 @@ export default function Auth() {
         setIsLoading(true);
         setMsg("");
         try {
-            const res = await api.post("api/login/", loginForm);
+            const res = await api.post("dashboard-api/login/", loginForm);
             localStorage.setItem("access", res.data.access);
             localStorage.setItem("refresh", res.data.refresh);
             localStorage.setItem("user", JSON.stringify(res.data.user));
@@ -52,7 +52,7 @@ export default function Auth() {
         setIsLoading(true);
         setMsg("");
         try {
-            const res = await api.post("api/register/", registerForm);
+            const res = await api.post("dashboard-api/register/", registerForm);
             setMsg("🎉 " + res.data.message);
         } catch (err) {
             setMsg("❌ " + (err.response?.data?.error || err.response?.data?.email || "Something went wrong"));

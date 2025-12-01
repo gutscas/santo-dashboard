@@ -68,6 +68,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e  # Exit on any error
+            
             # --- Go to project folder ---
             cd /home/rayi/santo-dashboard
 
@@ -79,26 +81,36 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt
 
-            # --- Fix permissions for dist folder ---
-            sudo chown -R rayi:rayi /home/rayi/santo-dashboard/santo-project/dist 2>/dev/null || true
-            chmod -R 755 /home/rayi/santo-dashboard/santo-project/dist 2>/dev/null || true
-
             # --- Node.js setup (NVM) ---
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use 20.19 || nvm install 20.19
 
-            # --- Frontend build ---
+            # --- Fix permissions and clean dist folder ---
             cd santo-project
+            
+            # Remove dist folder completely to avoid permission issues
+            if [ -d "dist" ]; then
+              sudo chown -R rayi:rayi dist/ || true
+              rm -rf dist/
+            fi
+            
+            # --- Frontend build ---
             npm ci
             export VITE_API_BASE_URL=/dashboard-api
             npm run build
+            
+            # Ensure proper permissions on new dist
+            chmod -R 755 dist/
+            
             cd ..
 
             # --- Django setup ---
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
 
-            # --- Restart services WITHOUT sudo (using systemctl --user or configured sudoers) ---
+            # --- Restart services ---
             sudo systemctl restart gunicorn-santo
             sudo systemctl reload nginx
+            
+            echo "✅ Deployment completed successfully!"

@@ -114,5 +114,4 @@ jobs:
             # --- Restart services ---
             sudo systemctl restart gunicorn-santo
             sudo systemctl reload nginx
-            
             echo "✅ Deployment completed successfully!"

@@ -19,7 +19,7 @@ function App() {
   return (
     <Provider store={store}>
       <UserProvider>
-        <BrowserRouter basename="/dashboard">
+        <BrowserRouter >
           <AppRoutes />
         </BrowserRouter>
       </UserProvider>

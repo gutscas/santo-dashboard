@@ -1,11 +1,9 @@
 // src/api.js
 import axios from "axios";
-
 const api = axios.create({
-    baseURL: "https://project.rayi.in/dashboard-api/",
+    baseURL: import.meta.env.VITE_API_BASE_URL || "/dashboard-api/",
     headers: { "Content-Type": "application/json" },
-});
-
+})
 // Request interceptor to add auth token
 api.interceptors.request.use(
     (config) => {

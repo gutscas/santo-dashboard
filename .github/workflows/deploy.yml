@@ -49,6 +49,8 @@ jobs:
       - name: Build Frontend
         working-directory: ./santo-project
         run: npm run build
+        env:
+          VITE_API_BASE_URL: /dashboard-api  # ✅ Added this
 
   # ====================================
   # 2️⃣ DEPLOY JOB (CD)
@@ -82,9 +84,10 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use 20.19 || nvm install 20.19
 
-            # --- Frontend build ---
+            # --- Frontend build with environment variable ---
             cd santo-project
             npm install
+            export VITE_API_BASE_URL=/dashboard-api  # ✅ Added this
             npm run build
             cd ..
 

@@ -55,7 +55,7 @@ jobs:
   # ====================================
   # 2️⃣ DEPLOY JOB (CD)
   # ====================================
-deploy:
+  deploy:
     needs: test-and-build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
@@ -70,7 +70,6 @@ deploy:
           script: |
             # --- Go to project folder ---
             cd /home/rayi/santo-dashboard
-
             # --- Pull latest code ---
             git pull origin main
 
@@ -84,18 +83,18 @@ deploy:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             nvm use 20.19 || nvm install 20.19
 
-            # --- Frontend build ---
+            # --- Frontend build with environment variable ---
             cd santo-project
-            npm ci
-            export VITE_API_BASE_URL=/dashboard-api
+            npm install
+            export VITE_API_BASE_URL=/dashboard-api  # ✅ Added this
             npm run build
             cd ..
 
-            # --- Django setup ---
-            python manage.py migrate --noinput
+            # --- Django migrations & collectstatic ---
+            python manage.py migrate
             python manage.py collectstatic --noinput
 
             # --- Restart services ---
             sudo systemctl daemon-reload
-            sudo systemctl restart gunicorn
-            sudo systemctl reload nginx
+            sudo systemctl restart gunicorn-santo
+            sudo systemctl restart nginx

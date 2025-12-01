@@ -106,6 +106,8 @@ jobs:
             cd ..
 
             # --- Django setup ---
+            sudo chown -R rayi:rayi staticfiles/ || true
+            sudo chmod -R 755 staticfiles/ || true
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
 

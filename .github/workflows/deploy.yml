@@ -50,7 +50,7 @@ jobs:
         working-directory: ./santo-project
         run: npm run build
         env:
-          VITE_API_BASE_URL: /dashboard-api  # ✅ Added this
+          VITE_API_BASE_URL: /dashboard-api
 
   # ====================================
   # 2️⃣ DEPLOY JOB (CD)
@@ -79,6 +79,10 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt
 
+            # --- Fix permissions for dist folder ---
+            sudo chown -R rayi:rayi /home/rayi/santo-dashboard/santo-project/dist 2>/dev/null || true
+            chmod -R 755 /home/rayi/santo-dashboard/santo-project/dist 2>/dev/null || true
+
             # --- Node.js setup (NVM) ---
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -95,7 +99,6 @@ jobs:
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
 
-            # --- Restart services ---
-            sudo systemctl daemon-reload
-            sudo systemctl restart gunicorn
+            # --- Restart services WITHOUT sudo (using systemctl --user or configured sudoers) ---
+            sudo systemctl restart gunicorn-santo
             sudo systemctl reload nginx

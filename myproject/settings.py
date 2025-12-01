@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-restoration-key-replace-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['210.18.176.178', 'project.rayi.in','http://localhost:5174/','http://localhost:5173/']
+ALLOWED_HOSTS = ['210.18.176.178', 'project.rayi.in', 'localhost', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = ['https://project.rayi.in']
 

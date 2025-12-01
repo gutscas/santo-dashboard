@@ -69,4 +69,4 @@ class PasswordResetOTP(models.Model):
         return not self.is_used and timezone.now() < expiry_time
 
     def __str__(self):
-        return f"OTP for {self.email}"
+        return f"OTP for {self.email}" 

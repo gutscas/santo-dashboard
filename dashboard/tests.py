@@ -80,7 +80,7 @@ class UsernameEmailUniquenessTest(TestCase):
         })
         
         # Login as first user
-        login_response1 = self.client.post('/dashboard-api/api/login/', {
+        login_response1 = self.client.post('/dashboard-api/login/', {
             'email': 'john1@test.com',
             'password': 'testpass123'
         })
@@ -88,7 +88,7 @@ class UsernameEmailUniquenessTest(TestCase):
         self.assertIn('access', login_response1.data)
         
         # Login as second user
-        login_response2 = self.client.post('/dashboard-api/api/login/', {
+        login_response2 = self.client.post('/dashboard-api/login/', {
             'email': 'john2@test.com',
             'password': 'testpass123'
         })

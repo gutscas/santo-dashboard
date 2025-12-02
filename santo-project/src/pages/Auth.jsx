@@ -148,7 +148,7 @@ export default function Auth() {
                                 <button
                                     onClick={handleLogin}
                                     disabled={isLoading}
-                                    className="w-full cursor-pointer bg-gradient-to-r from-green-600 to-yellow-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
+                                    className="w-full cursor-pointer bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
                                 >
                                     {isLoading ? "Signing In..." : "Sign In"}
                                 </button>
